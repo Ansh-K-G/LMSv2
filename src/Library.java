@@ -249,48 +249,69 @@ public class Library {
     }
 
     public void returnBook() {
-        System.out.print("Enter Book Code: ");
-        String bookCode = sc.nextLine();
-        System.out.print("Enter Book Number: ");
-        int bookNo = Integer.parseInt(sc.nextLine());
-        System.out.print("Enter User ID: ");
-        String userId = sc.nextLine();
+        Scanner sc = new Scanner(System.in);
 
-        User user = getUserById(userId);
-        Book book = getBookByCode(bookCode);
-        if (user == null || book == null) {
-            System.out.println("Invalid User or Book");
+        System.out.print("Enter User ID: ");
+        String userId = sc.nextLine().trim();
+
+        System.out.print("Enter Book Code: ");
+        String bookCode = sc.nextLine().trim();
+
+        System.out.print("Enter Book Number: ");
+        int bookNo = 0;
+        try {
+            bookNo = Integer.parseInt(sc.nextLine());
+        } catch (Exception e) {
+            System.out.println("Invalid book number!");
             return;
         }
 
-        boolean hasBook = false;
+        User user = getUserById(userId);
+        Book book = getBookByCode(bookCode);
+
+        if (user == null) {
+            System.out.println("User not found!");
+            return;
+        }
+
+        if (book == null) {
+            System.out.println("Book not found!");
+            return;
+        }
+
+        IssuedBookInfo issuedBook = null;
         for (IssuedBookInfo info : user.getIssuedBooks()) {
-            if (info.getBookCode().equals(bookCode) && info.getBookNo() == bookNo && !info.isReturned()) {
-                info.markReturned();
-                hasBook = true;
+            if (info.getBookCode().equalsIgnoreCase(bookCode) && info.getBookNo() == bookNo && !info.isReturned()) {
+                issuedBook = info;
                 break;
             }
         }
 
-        if (!hasBook) {
+        if (issuedBook == null) {
             System.out.println("Cannot return book: Book not issued to this user");
             return;
         }
 
+        long daysIssued = java.time.temporal.ChronoUnit.DAYS.between(issuedBook.getIssueDate(),
+                java.time.LocalDate.now());
+        if (daysIssued > 7) {
+            double fineAmount = (daysIssued - 7) * 10;
+            user.addFine(fineAmount);
+            System.out.println("Late return! Fine added: " + fineAmount);
+        }
+
+        issuedBook.markReturned();
+        user.removeIssuedBook(bookCode, bookNo);
+
         book.returnBook(bookNo);
         saveBooks();
-        saveUsers();
         saveIssuedBooks();
-        saveLogs(new Log("Book returned", userId, bookCode, bookNo));
-        System.out.println("Book returned successfully");
+        saveUsers();
+        addLog("Book returned: " + bookCode + " (No: " + bookNo + ") by User: " + userId);
+
+        System.out.println("Book returned successfully!");
     }
 
-    // ------------------ LOGS ----------------------
-
-    public void showLogs() {
-        for (Log log : logs)
-            System.out.println(log);
-    }
 
     // ------------------ FILE HANDLING ----------------------
 
@@ -615,6 +636,26 @@ public class Library {
     }
 
     // ------------------ Logs ----------------------
+
+    public void showLogs() {
+        if (logs.isEmpty()) {
+            System.out.println("No logs available.");
+            return;
+        }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        System.out.println("+---------------------+------------------------------------------+");
+        System.out.printf("| %-19s | %-40s |\n", "Date & Time", "Message");
+        System.out.println("+---------------------+------------------------------------------+");
+
+        for (Log log : logs) {
+            String timeStr = log.getTimestamp().format(formatter);
+            System.out.printf("| %-19s | %-40s |\n", timeStr, log.getMessage());
+        }
+
+        System.out.println("+---------------------+------------------------------------------+");
+    }
 
     private void loadLogs() {
         logs.clear();

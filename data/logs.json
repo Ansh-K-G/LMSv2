@@ -3,30 +3,40 @@
         "bookNo": 0,
         "message": "User added",
         "userId": "001ANS#CSE",
-        "timestamp": "2025-11-16T19:41:36.919516200"
+        "timestamp": "2025-11-16T20:18:18.691758500"
     },
     {
         "bookNo": 0,
         "message": "2025-11-16 19:42:34 - Added Book: New Minds (001)",
-        "timestamp": "2025-11-16T19:42:34.495174500"
+        "timestamp": "2025-11-16T20:18:18.691758500"
     },
     {
         "bookNo": 1,
         "bookCode": "001",
         "message": "Book issued",
         "userId": "001ANS#CSE",
-        "timestamp": "2025-11-16T19:42:58.066029200"
+        "timestamp": "2025-11-16T20:18:18.691758500"
     },
     {
         "bookNo": 0,
         "message": "2025-11-16 19:45:18 - Added Book: Indian Histroy (101)",
-        "timestamp": "2025-11-16T19:45:18.921522"
+        "timestamp": "2025-11-16T20:18:18.691758500"
     },
     {
         "bookNo": 1,
         "bookCode": "001",
         "message": "Book returned",
         "userId": "001ANS#CSE",
-        "timestamp": "2025-11-16T19:46:04.191779900"
+        "timestamp": "2025-11-16T20:18:18.691758500"
+    },
+    {
+        "bookNo": 0,
+        "message": "2025-11-16 20:17:38 - Librarian logged out",
+        "timestamp": "2025-11-16T20:18:18.691758500"
+    },
+    {
+        "bookNo": 0,
+        "message": "2025-11-16 20:20:16 - Librarian logged out",
+        "timestamp": "2025-11-16T20:20:16.587701"
     }
 ]
