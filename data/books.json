@@ -1,1 +1,25 @@
-[]
+[
+    {
+        "bookCode": "001",
+        "author": "Nash",
+        "availableBooks": [
+            2,
+            3,
+            4,
+            5,
+            1
+        ],
+        "bookName": "New Minds",
+        "totalBooks": 5
+    },
+    {
+        "bookCode": "101",
+        "author": "TanuIPS",
+        "availableBooks": [
+            1,
+            2
+        ],
+        "bookName": "Indian Histroy",
+        "totalBooks": 2
+    }
+]

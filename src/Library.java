@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -39,6 +40,55 @@ public class Library {
     }
 
     // ------------------ USER MANAGEMENT ----------------------
+
+    public void searchUser() {
+        if (users.isEmpty()) {
+            System.out.println("No users found.");
+            return;
+        }
+
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Search user by:\n1. User ID\n2. Name\n3. Roll Number\n4. Phone Number");
+        System.out.print("Choice: ");
+        int choice = Integer.parseInt(sc.nextLine());
+        System.out.print("Enter search value: ");
+        String query = sc.nextLine().trim();
+
+        List<User> results = new java.util.ArrayList<>();
+
+        for (User u : users) {
+            switch (choice) {
+                case 1:
+                    if (u.getUserId().equalsIgnoreCase(query))
+                        results.add(u);
+                    break;
+                case 2:
+                    if (u.getUserName().toLowerCase().contains(query.toLowerCase()))
+                        results.add(u);
+                    break;
+                case 3:
+                    if (u.getRollNumber().equalsIgnoreCase(query))
+                        results.add(u);
+                    break;
+                case 4:
+                    if (u.getPhoneNumber().equalsIgnoreCase(query))
+                        results.add(u);
+                    break;
+                default:
+                    System.out.println("Invalid choice");
+                    return;
+            }
+        }
+
+        if (results.isEmpty()) {
+            System.out.println("No matching users found.");
+        } else {
+            System.out.println("Found Users:");
+            for (User u : results) {
+                System.out.println("ID: " + u.getUserId() + ", Name: " + u.getUserName() + ", Fine: " + u.getFine());
+            }
+        }
+    }
 
     public void addUser() {
         try {
@@ -113,6 +163,52 @@ public class Library {
     }
 
     // ------------------ BOOK MANAGEMENT ----------------------
+    public void searchBook() {
+        if (books.isEmpty()) {
+            System.out.println("No books found.");
+            return;
+        }
+
+        Scanner sc = new Scanner(System.in);
+        System.out.println("Search book by:\n1. Book Code\n2. Name\n3. Author");
+        System.out.print("Choice: ");
+        int choice = Integer.parseInt(sc.nextLine());
+        System.out.print("Enter search value: ");
+        String query = sc.nextLine().trim();
+
+        List<Book> results = new java.util.ArrayList<>();
+
+        for (Book b : books) {
+            switch (choice) {
+                case 1:
+                    if (b.getBookCode().equalsIgnoreCase(query))
+                        results.add(b);
+                    break;
+                case 2:
+                    if (b.getBookName().toLowerCase().contains(query.toLowerCase()))
+                        results.add(b);
+                    break;
+                case 3:
+                    if (b.getAuthor().toLowerCase().contains(query.toLowerCase()))
+                        results.add(b);
+                    break;
+                default:
+                    System.out.println("Invalid choice");
+                    return;
+            }
+        }
+
+        if (results.isEmpty()) {
+            System.out.println("No matching books found.");
+        } else {
+            System.out.println("Found Books:");
+            for (Book b : results) {
+                System.out.println(
+                        "Code: " + b.getBookCode() + ", Name: " + b.getBookName() + ", Author: " + b.getAuthor() +
+                                ", Available: " + b.getAvailableBooks().size() + "/" + b.getTotalBooks());
+            }
+        }
+    }
 
     public void showBooks() {
         System.out.println("Available Books:");
@@ -279,6 +375,97 @@ public class Library {
         }
     }
 
+    public void showUsers(int n, String mode) {
+        if (users.isEmpty()) {
+            System.out.println("No users found.");
+            return;
+        }
+
+        System.out.println("------ Library Users ------");
+
+        int count = Math.min(n, users.size());
+
+        for (int i = 0; i < count; i++) {
+            User u = users.get(i);
+
+            switch (mode.toLowerCase()) {
+                case "important":
+                    System.out.println("User ID: " + u.getUserId());
+                    System.out.println("Name: " + u.getUserName());
+                    System.out.println("Fine: " + u.getFine());
+                    break;
+
+                case "all":
+                    System.out.println("User ID: " + u.getUserId());
+                    System.out.println("Name: " + u.getUserName());
+                    System.out.println("Course: " + u.getCourse());
+                    System.out.println("Section: " + u.getSection());
+                    System.out.println("Roll Number: " + u.getRollNumber());
+                    System.out.println("Phone Number: " + u.getPhoneNumber());
+                    System.out.println("Registration Number: " + u.getRegistrationNumber());
+                    System.out.println("Fine: " + u.getFine());
+                    if (!u.getIssuedBooks().isEmpty()) {
+                        System.out.println("Issued Books:");
+                        for (IssuedBookInfo b : u.getIssuedBooks()) {
+                            System.out.println("  Book Code: " + b.getBookCode() + ", Book No: " + b.getBookNo());
+                        }
+                    }
+                    break;
+
+                default:
+                    // field mode: comma separated fields, e.g., "id,name,fine"
+                    String[] fields = mode.split(",");
+                    for (String f : fields) {
+                        f = f.trim().toLowerCase();
+                        switch (f) {
+                            case "id":
+                                System.out.println("User ID: " + u.getUserId());
+                                break;
+                            case "name":
+                                System.out.println("Name: " + u.getUserName());
+                                break;
+                            case "course":
+                                System.out.println("Course: " + u.getCourse());
+                                break;
+                            case "section":
+                                System.out.println("Section: " + u.getSection());
+                                break;
+                            case "roll":
+                                System.out.println("Roll Number: " + u.getRollNumber());
+                                break;
+                            case "phone":
+                                System.out.println("Phone Number: " + u.getPhoneNumber());
+                                break;
+                            case "reg":
+                                System.out.println("Registration Number: " + u.getRegistrationNumber());
+                                break;
+                            case "fine":
+                                System.out.println("Fine: " + u.getFine());
+                                break;
+                            case "issuedbooks":
+                                if (!u.getIssuedBooks().isEmpty()) {
+                                    System.out.println("Issued Books:");
+                                    for (IssuedBookInfo b : u.getIssuedBooks()) {
+                                        System.out.println(
+                                                "  Book Code: " + b.getBookCode() + ", Book No: " + b.getBookNo());
+                                    }
+                                }
+                                break;
+                            default:
+                                System.out.println("Unknown field: " + f);
+                        }
+                    }
+                    break;
+            }
+
+            System.out.println("---------------------------");
+        }
+
+        if (count < users.size()) {
+            System.out.println("...and " + (users.size() - count) + " more users");
+        }
+    }
+
     // ------------------ Books ----------------------
 
     private void loadBooks() {
@@ -303,6 +490,69 @@ public class Library {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void addBook() {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter Book Name: ");
+        String name = sc.nextLine();
+
+        System.out.print("Enter Author Name: ");
+        String author = sc.nextLine();
+
+        System.out.print("Enter Book Code: ");
+        String code = sc.nextLine();
+
+        // Check if book already exists
+        for (Book b : books) {
+            if (b.getBookCode().equalsIgnoreCase(code)) {
+                System.out.println("Book with this code already exists!");
+                return;
+            }
+        }
+
+        System.out.print("Enter total number of copies: ");
+        int total = Integer.parseInt(sc.nextLine());
+
+        Book book = new Book(name, author, code, total);
+        books.add(book);
+
+        saveBooks(); // save to JSON file
+        addLog("Added Book: " + name + " (" + code + ")");
+        System.out.println("Book added successfully!");
+    }
+
+    public void removeBook() {
+        Scanner sc = new Scanner(System.in);
+
+        System.out.print("Enter Book Code to remove: ");
+        String code = sc.nextLine();
+
+        Book toRemove = null;
+
+        for (Book b : books) {
+            if (b.getBookCode().equalsIgnoreCase(code)) {
+                toRemove = b;
+                break;
+            }
+        }
+
+        if (toRemove == null) {
+            System.out.println("Book not found!");
+            return;
+        }
+
+        // Check if any copy is issued
+        if (toRemove.getAvailableBooks().size() < toRemove.getTotalBooks()) {
+            System.out.println("Cannot remove book. Some copies are currently issued.");
+            return;
+        }
+
+        books.remove(toRemove);
+        saveBooks(); // update JSON
+        addLog("Removed Book: " + toRemove.getBookName() + " (" + toRemove.getBookCode() + ")");
+        System.out.println("Book removed successfully!");
     }
 
     private void saveBooks() {
@@ -393,6 +643,18 @@ public class Library {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    public void addLog(String message) {
+        // Get current date & time
+        LocalDateTime now = LocalDateTime.now();
+        String dateTime = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        // Create log entry
+        Log log = new Log(dateTime + " - " + message);
+
+        // Add to logs list and save
+        saveLogs(log);
     }
 
     private void saveLogs(Log log) {
