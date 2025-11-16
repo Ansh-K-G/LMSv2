@@ -25,11 +25,18 @@ public class User {
         this.fine = 0.0;
     }
 
-    // Getters and Setters
+    // Getters
     public String getUserId() { return userId; }
     public String getUserName() { return userName; }
+    public int getRegistrationNumber() { return registrationNumber; }  // Added
+    public String getPhoneNumber() { return phoneNumber; }              // Added
+    public String getCourse() { return course; }                        // Added
+    public char getSection() { return section; }                        // Added
+    public String getRollNumber() { return rollNumber; }                // Added
     public List<IssuedBookInfo> getIssuedBooks() { return issuedBooks; }
     public double getFine() { return fine; }
+
+    // Modifiers
     public void addIssuedBook(IssuedBookInfo book) { issuedBooks.add(book); }
     public void removeIssuedBook(String bookCode, int bookNo) {
         issuedBooks.removeIf(b -> b.getBookCode().equals(bookCode) && b.getBookNo() == bookNo);
@@ -37,4 +44,3 @@ public class User {
     public void addFine(double amount) { fine += amount; }
     public void clearFine() { fine = 0; }
 }
-

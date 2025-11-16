@@ -1,18 +1,23 @@
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.parser.JSONParser;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
 public class Library {
+
     private List<User> users;
     private List<Book> books;
     private List<IssuedBookInfo> issuedBooks;
     private List<Log> logs;
     private int countUser;
+
     private final String userFile = "data/users.json";
     private final String bookFile = "data/books.json";
     private final String issuedFile = "data/issuedbooks.json";
@@ -34,6 +39,7 @@ public class Library {
     }
 
     // ------------------ USER MANAGEMENT ----------------------
+
     public void addUser() {
         try {
             System.out.print("Enter Name: ");
@@ -63,9 +69,10 @@ public class Library {
             User user = new User(userId, name, countUser, phone, course, section, roll);
             users.add(user);
             updateCounter();
-            updateUsersFile();
-            updateLog(new Log("User added", userId, null, 0));
+            saveUsers();
+            saveLogs(new Log("User added", userId, null, 0));
             System.out.println("User added successfully with ID: " + userId);
+
         } catch (Exception e) {
             System.out.println("Error adding user: " + e.getMessage());
         }
@@ -86,14 +93,16 @@ public class Library {
         System.out.print("Confirm delete? (y/n): ");
         if (sc.nextLine().equalsIgnoreCase("y")) {
             users.remove(user);
-            updateUsersFile();
-            updateLog(new Log("User deleted", userId, null, 0));
+            saveUsers();
+            saveLogs(new Log("User deleted", userId, null, 0));
             System.out.println("User deleted successfully.");
         }
     }
 
     private User getUserById(String userId) {
-        for (User u : users) if (u.getUserId().equalsIgnoreCase(userId)) return u;
+        for (User u : users)
+            if (u.getUserId().equalsIgnoreCase(userId))
+                return u;
         return null;
     }
 
@@ -104,6 +113,7 @@ public class Library {
     }
 
     // ------------------ BOOK MANAGEMENT ----------------------
+
     public void showBooks() {
         System.out.println("Available Books:");
         for (Book b : books) {
@@ -135,10 +145,10 @@ public class Library {
         user.addIssuedBook(info);
         issuedBooks.add(info);
 
-        updateBooksFile();
-        updateUsersFile();
-        updateIssuedBooksFile();
-        updateLog(new Log("Book issued", userId, bookCode, bookNo));
+        saveBooks();
+        saveUsers();
+        saveIssuedBooks();
+        saveLogs(new Log("Book issued", userId, bookCode, bookNo));
         System.out.println("Book issued successfully. BookNo: " + bookNo);
     }
 
@@ -172,52 +182,244 @@ public class Library {
         }
 
         book.returnBook(bookNo);
-        updateBooksFile();
-        updateUsersFile();
-        updateIssuedBooksFile();
-        updateLog(new Log("Book returned", userId, bookCode, bookNo));
+        saveBooks();
+        saveUsers();
+        saveIssuedBooks();
+        saveLogs(new Log("Book returned", userId, bookCode, bookNo));
         System.out.println("Book returned successfully");
     }
 
     // ------------------ LOGS ----------------------
+
     public void showLogs() {
-        for (Log log : logs) System.out.println(log);
+        for (Log log : logs)
+            System.out.println(log);
     }
 
     // ------------------ FILE HANDLING ----------------------
+
     private void loadCounter() {
-        File f = new File(counterFile);
-        if (!f.exists()) {
+        try {
+            if (!Files.exists(Paths.get(counterFile))) {
+                countUser = 0;
+                saveCounter();
+                return;
+            }
+            String content = new String(Files.readAllBytes(Paths.get(counterFile)));
+            JSONObject obj = new JSONObject(content);
+            countUser = obj.getInt("countUser");
+        } catch (Exception e) {
             countUser = 0;
-            updateCounter();
-            return;
         }
-        try (FileReader reader = new FileReader(f)) {
-            JSONObject obj = (JSONObject) new JSONParser().parse(reader);
-            countUser = ((Long)obj.get("countUser")).intValue();
-        } catch (Exception e) { countUser = 0; }
     }
 
-    private void updateCounter() {
+    private void saveCounter() {
         try (FileWriter writer = new FileWriter(counterFile)) {
             JSONObject obj = new JSONObject();
             obj.put("countUser", countUser);
-            writer.write(obj.toJSONString());
-        } catch (Exception e) { e.printStackTrace(); }
+            writer.write(obj.toString(4));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    private void loadUsers() { users = new ArrayList<>(); }
-    private void loadBooks() { books = new ArrayList<>(); }
-    private void loadIssuedBooks() { issuedBooks = new ArrayList<>(); }
-    private void loadLogs() { logs = new ArrayList<>(); }
+    private void updateCounter() {
+        try (FileWriter writer = new FileWriter("data/userCounter.json")) {
+            JSONObject obj = new JSONObject();
+            obj.put("countUser", countUser); // save the current user count
+            writer.write(obj.toString(4)); // pretty print with 4 spaces
+        } catch (IOException e) {
+            System.out.println("Error updating user counter: " + e.getMessage());
+        }
+    }
 
-    private void updateUsersFile() {}
-    private void updateBooksFile() {}
-    private void updateIssuedBooksFile() {}
-    private void updateLog(Log log) { logs.add(log); }
+    // ------------------ Users ----------------------
+
+    private void loadUsers() {
+        users.clear();
+        try {
+            if (!Files.exists(Paths.get(userFile)))
+                return;
+            String content = new String(Files.readAllBytes(Paths.get(userFile)));
+            JSONArray arr = new JSONArray(content);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject u = arr.getJSONObject(i);
+                User user = new User(
+                        u.getString("userId"),
+                        u.getString("userName"),
+                        u.getInt("registrationNumber"),
+                        u.getString("phoneNumber"),
+                        u.getString("course"),
+                        u.getString("section").charAt(0),
+                        u.getString("rollNumber"));
+                users.add(user);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveUsers() {
+        try (FileWriter writer = new FileWriter(userFile)) {
+            JSONArray arr = new JSONArray();
+            for (User u : users) {
+                JSONObject obj = new JSONObject();
+                obj.put("userId", u.getUserId());
+                obj.put("userName", u.getUserName());
+                obj.put("registrationNumber", u.getRegistrationNumber());
+                obj.put("phoneNumber", u.getPhoneNumber());
+                obj.put("course", u.getCourse());
+                obj.put("section", String.valueOf(u.getSection()));
+                obj.put("rollNumber", u.getRollNumber());
+                arr.put(obj);
+            }
+            writer.write(arr.toString(4));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ------------------ Books ----------------------
+
+    private void loadBooks() {
+        books.clear();
+        try {
+            if (!Files.exists(Paths.get(bookFile)))
+                return;
+            String content = new String(Files.readAllBytes(Paths.get(bookFile)));
+            JSONArray arr = new JSONArray(content);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject b = arr.getJSONObject(i);
+                Book book = new Book(
+                        b.getString("bookName"),
+                        b.getString("author"),
+                        b.getString("bookCode"),
+                        b.getInt("totalBooks"));
+                JSONArray avail = b.getJSONArray("availableBooks");
+                for (int j = 0; j < avail.length(); j++)
+                    book.getAvailableBooks().add(avail.getInt(j));
+                books.add(book);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveBooks() {
+        try (FileWriter writer = new FileWriter(bookFile)) {
+            JSONArray arr = new JSONArray();
+            for (Book b : books) {
+                JSONObject obj = new JSONObject();
+                obj.put("bookName", b.getBookName());
+                obj.put("author", b.getAuthor());
+                obj.put("bookCode", b.getBookCode());
+                obj.put("totalBooks", b.getTotalBooks());
+                JSONArray avail = new JSONArray();
+                for (int x : b.getAvailableBooks())
+                    avail.put(x);
+                obj.put("availableBooks", avail);
+                arr.put(obj);
+            }
+            writer.write(arr.toString(4));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ------------------ Issued Books ----------------------
+
+    private void loadIssuedBooks() {
+        issuedBooks.clear();
+        try {
+            if (!Files.exists(Paths.get(issuedFile)))
+                return;
+            String content = new String(Files.readAllBytes(Paths.get(issuedFile)));
+            JSONArray arr = new JSONArray(content);
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject b = arr.getJSONObject(i);
+                IssuedBookInfo info = new IssuedBookInfo(
+                        b.getString("userId"),
+                        b.getString("bookCode"),
+                        b.getInt("bookNo"));
+                issuedBooks.add(info);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveIssuedBooks() {
+        try (FileWriter writer = new FileWriter(issuedFile)) {
+            JSONArray arr = new JSONArray();
+            for (IssuedBookInfo b : issuedBooks) {
+                JSONObject obj = new JSONObject();
+                obj.put("userId", b.getUserId());
+                obj.put("bookCode", b.getBookCode());
+                obj.put("bookNo", b.getBookNo());
+                arr.put(obj);
+            }
+            writer.write(arr.toString(4));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // ------------------ Logs ----------------------
+
+    private void loadLogs() {
+        logs.clear();
+        try {
+            if (!Files.exists(Paths.get(logFile)))
+                return;
+
+            String content = new String(Files.readAllBytes(Paths.get(logFile)));
+            JSONArray arr = new JSONArray(content);
+
+            for (int i = 0; i < arr.length(); i++) {
+                JSONObject l = arr.getJSONObject(i);
+                Log log = new Log(
+                        l.getString("message"),
+                        l.optString("userId", null),
+                        l.optString("bookCode", null),
+                        l.optInt("bookNo", 0));
+                // Parse timestamp
+                if (l.has("timestamp"))
+                    log = new Log(l.getString("message"),
+                            l.optString("userId", null),
+                            l.optString("bookCode", null),
+                            l.optInt("bookNo", 0));
+                logs.add(log);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void saveLogs(Log log) {
+        logs.add(log);
+        try (FileWriter writer = new FileWriter(logFile)) {
+            JSONArray arr = new JSONArray();
+
+            for (Log l : logs) {
+                JSONObject obj = new JSONObject();
+                obj.put("message", l.getMessage());
+                obj.put("userId", l.getUserId());
+                obj.put("bookCode", l.getBookCode());
+                obj.put("bookNo", l.getBookNo());
+                obj.put("timestamp", l.getTimestamp().toString());
+                arr.put(obj);
+            }
+
+            writer.write(arr.toString(4)); // pretty print JSON
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     private Book getBookByCode(String code) {
-        for (Book b : books) if (b.getBookCode().equalsIgnoreCase(code)) return b;
+        for (Book b : books)
+            if (b.getBookCode().equalsIgnoreCase(code))
+                return b;
         return null;
     }
 }

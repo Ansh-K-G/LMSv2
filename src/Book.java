@@ -17,11 +17,14 @@ public class Book {
         for (int i = 1; i <= totalBooks; i++) availableBooks.add(i);
     }
 
-    // Getters and Setters
+    // Getters
     public String getBookCode() { return bookCode; }
     public String getBookName() { return bookName; }
+    public String getAuthor() { return author; }          // Added
+    public int getTotalBooks() { return totalBooks; }     // Added
     public List<Integer> getAvailableBooks() { return availableBooks; }
 
+    // Book availability and operations
     public boolean isAvailable() { return !availableBooks.isEmpty(); }
 
     public int issueBook() {
